@@ -5,15 +5,39 @@ import {
   useWorkflowMeta,
   useSimulatorActions,
 } from '@store/index';
-import { simulateWorkflow } from '@api/simulation';
 import { useWorkflowValidator } from '@features/validator/hooks/useWorkflowValidator';
+import {
+  buildSimulationRequest,
+  runSimulation,
+  getSimulationStatus,
+  getSimulationErrorMessage,
+} from '@services/simulation';
 import type { SimulationStep } from '@types-app/api';
-import type { SimulateRequest } from '@types-app/api';
 
+/**
+ * REFACTORED: Uses simulation service for data transformation and API calls
+ *
+ * BEFORE: Hook was mixing concerns
+ *   - Data transformation (nodes/edges → API format)
+ *   - API calls
+ *   - Response handling
+ *   - State updates
+ *
+ * AFTER: Clean separation
+ *   - Hook focuses on: validation, state orchestration, error handling
+ *   - Service handles: data transformation, API interaction
+ *   - UI effects are clear and isolated
+ *
+ * Benefits:
+ * - Service layer is independently testable
+ * - Hook is simpler and easier to understand
+ * - API changes don't require hook changes
+ * - Streaming step updates are centralized
+ */
 export function useSimulator() {
-  const nodes   = useNodes();
-  const edges   = useEdges();
-  const meta    = useWorkflowMeta();
+  const nodes = useNodes();
+  const edges = useEdges();
+  const meta = useWorkflowMeta();
 
   const {
     setStatus,
@@ -47,24 +71,11 @@ export function useSimulator() {
     setStatus('running');
     stepBufferRef.current = [];
 
-    // 3. Build request payload
-    const request: SimulateRequest = {
-      workflowId: meta.id,
-      nodes: nodes.map((n) => ({
-        id:       n.id,
-        type:     n.type ?? 'unknown',
-        data:     n.data as Record<string, unknown>,
-        position: n.position,
-      })),
-      edges: edges.map((e) => ({
-        id:     e.id,
-        source: e.source,
-        target: e.target,
-      })),
-    };
-
     try {
-      // 4. Stream each step as it executes
+      // 3. Build request using service (no manual transformation here)
+      const request = buildSimulationRequest(meta.id, nodes, edges);
+
+      // 4. Stream each step as it executes (service calls this callback)
       const onStep = (step: SimulationStep) => {
         // Replace any existing entry for this nodeId (running → completed)
         const idx = stepBufferRef.current.findIndex(
@@ -75,16 +86,20 @@ export function useSimulator() {
         } else {
           stepBufferRef.current.push(step);
         }
-        // Write a shallow copy to trigger re-render
+        // Shallow copy triggers re-render
         setSteps([...stepBufferRef.current]);
       };
 
-      const response = await simulateWorkflow(request, onStep);
+      // 5. Execute simulation (all API interaction is here)
+      const response = await runSimulation(request, onStep);
 
+      // 6. Update UI with results (using service helper functions)
       setSteps(response.steps);
-      setStatus(response.status === 'completed' ? 'completed' : 'error');
-      if (response.status === 'failed') {
-        setError('One or more steps failed during execution. See log below.');
+      setStatus(getSimulationStatus(response) as 'completed' | 'error');
+
+      const errorMsg = getSimulationErrorMessage(response);
+      if (errorMsg) {
+        setError(errorMsg);
       }
     } catch (err) {
       setStatus('error');
@@ -93,9 +108,15 @@ export function useSimulator() {
       );
     }
   }, [
-    nodes, edges, meta,
+    nodes,
+    edges,
+    meta,
     validate,
-    setStatus, setSteps, setError, openDrawer, resetSimulator,
+    setStatus,
+    setSteps,
+    setError,
+    openDrawer,
+    resetSimulator,
   ]);
 
   return { run };

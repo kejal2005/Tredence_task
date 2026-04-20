@@ -26,4 +26,6 @@ export interface ValidationResult {
   issues:  ValidationIssue[];
   errors:  ValidationIssue[];    // severity === 'error'
   warnings: ValidationIssue[];   // severity === 'warning'
+  errorCount?: number;           // Count of errors
+  warningCount?: number;         // Count of warnings
 }

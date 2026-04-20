@@ -24,7 +24,8 @@
       "@types-app/*": ["./src/types/*"],
       "@lib/*": ["./src/lib/*"],
       "@hooks/*": ["./src/hooks/*"],
-      "@components/*": ["./src/components/*"]
+      "@components/*": ["./src/components/*"],
+      "@services/*": ["./src/services/*"]
     }
   },
   "include": ["src"]
