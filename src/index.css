@@ -1,0 +1,103 @@
+/* React Flow base styles */
+@import '@xyflow/react/dist/style.css';
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --panel-bg: #ffffff;
+    --panel-border: #e5e7eb;
+    --sidebar-bg: #f9fafb;
+    --canvas-bg: #f1f5f9;
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+
+  html, body, #root {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  }
+
+  body {
+    background-color: var(--canvas-bg);
+    color: #111827;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+}
+
+@layer components {
+  /* Node base styles */
+  .workflow-node {
+    @apply rounded-xl bg-white shadow-node cursor-pointer transition-all duration-150;
+    min-width: 180px;
+  }
+
+  .workflow-node.selected {
+    @apply shadow-node-selected;
+  }
+
+  .workflow-node:hover {
+    @apply shadow-md;
+  }
+
+  /* Form input base */
+  .form-input {
+    @apply w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm
+           text-gray-900 placeholder-gray-400 outline-none transition-all
+           focus:border-brand-500 focus:ring-2 focus:ring-brand-100
+           disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-400;
+  }
+
+  .form-label {
+    @apply block text-xs font-semibold text-gray-600 mb-1 uppercase tracking-wide;
+  }
+
+  .form-error {
+    @apply text-xs text-red-500 mt-1;
+  }
+
+  /* Panel scrollbar */
+  .panel-scroll {
+    scrollbar-width: thin;
+    scrollbar-color: #d1d5db transparent;
+  }
+
+  .panel-scroll::-webkit-scrollbar {
+    width: 4px;
+  }
+
+  .panel-scroll::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .panel-scroll::-webkit-scrollbar-thumb {
+    background-color: #d1d5db;
+    border-radius: 4px;
+  }
+}
+
+/* React Flow edge overrides */
+.react-flow__edge-path {
+  stroke-width: 2;
+}
+
+.react-flow__handle {
+  width: 10px !important;
+  height: 10px !important;
+  border-width: 2px !important;
+}
+
+.react-flow__handle-left {
+  left: -5px !important;
+}
+
+.react-flow__handle-right {
+  right: -5px !important;
+}
